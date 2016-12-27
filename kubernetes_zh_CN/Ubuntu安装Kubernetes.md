@@ -1,6 +1,6 @@
-# Ubuntu安装手册
+# Ubuntu安装Kubernetes
 
-**@User Guide  @@Createing a Cluster**
+**@Createing a Cluster**
 
 
 
@@ -12,6 +12,8 @@
 4. etcd-2.2.1，flannel-0.5.5，k8s-1.2.0
 5. 所有远程服务器可以使用key登录
 6. 所有远程用户使用/bin/bash作为默认shell，并且拥有sudo权限
+
+
 
 
 
@@ -80,4 +82,54 @@ $ KUBERNETES_PROVIDER=ubuntu ./kube-up.sh
 ```
 
 这个脚本使用scp自动复制二进制和配置文件到所有的机器上，并在所有机器上开启kubernetes服务。你只需要在交互过程中输入sudo密码
+
+如果一切顺利完成，可以看到如下输出表示k8s集群正常启动
+
+```
+Cluster validation succeeded
+```
+
+
+
+### 测试
+
+使用kubectl进行测试，kubectl在cluster/ubuntu/binaries目录下，可以把kubectl加入PATH更方便的使用。使用kubectl get nodes查看所有节点信息
+
+```
+$ kubectl get nodes
+NAME            LABELS                                 STATUS
+10.10.103.162   kubernetes.io/hostname=10.10.103.162   Ready
+10.10.103.223   kubernetes.io/hostname=10.10.103.223   Ready
+10.10.103.250   kubernetes.io/hostname=10.10.103.250   Ready
+```
+
+
+
+##### 添加插件
+
+为一个正常运行的集群添加如DNS或者UI插件。DNS配置在cluster/ubuntu/config-default.sh脚本里。DNS_SERVER_IP必须在SERVICE_CLUSTER_IP_RANGE范围内，DNS_REPLICAS描述dns pod数量。
+
+```shell
+ENABLE_CLUSTER_DNS="${KUBE_ENABLE_CLUSTER_DNS:-true}"
+DNS_SERVER_IP="192.168.3.10"
+DNS_DOMAIN="cluster.local"
+DNS_REPLICAS=1
+```
+
+添加UI插件
+
+```shell
+ENABLE_CLUSTER_UI="${KUBE_ENABLE_CLUSTER_UI:-true}"
+```
+
+配置完成后，执行如下指令
+
+```shell
+$ cd cluster/ubuntu
+$ KUBERNETES_PROVIDER=ubuntu ./deployAddons.sh
+```
+
+正常完成后，可以使用`$ kubectl get pods --namespace=kube-system`查看DNS和UI插件运行情况
+
+
 
