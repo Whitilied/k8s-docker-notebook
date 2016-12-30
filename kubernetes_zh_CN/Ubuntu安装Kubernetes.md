@@ -73,7 +73,7 @@ export FLANNEL_NET=172.16.0.0/16
 192.168.0.0     -   192.168.255.255 (192.168/16 prefix)
 ```
 
-**FLANNEL_NET**变量定义flannel overlay网络地址，确保不要与**SERVICE_CLUSTER_IP_RANGE**冲突。可以根据**cluster/ubuntu/comfig-default.sh**为Flannel网络提供额外的配置
+**FLANNEL_NET**变量定义flannel overlay网络地址，确保不要与**SERVICE_CLUSTER_IP_RANGE**冲突。可以根据**cluster/ubuntu/config-default.sh**为Flannel网络提供额外的配置
 
 在上述变量正确设置完成后，在**cluster**目录下执行下述指令构建整个集群
 
