@@ -1,5 +1,8 @@
 # docker-zh_CN
 * docker文档翻译
-* docker学习笔记
 * kubernetes文档翻译
-* kubernetes学习笔记
+* 个人总结内容
+
+
+
+翻译尽量简化便于阅读，自己在学习docker和kubernetes的历程
