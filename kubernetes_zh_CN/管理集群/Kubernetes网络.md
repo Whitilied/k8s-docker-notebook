@@ -1,17 +1,14 @@
 # Kubernetes网络
 
-**@Administering Cluster**
-
-> 2016-12-27  robin Lee <<miaomiao3312763@qq.com>>
-
 
 
 Kurbernetes网络实现与Docker默认网络实现有些不同，主要有如下4个问题需要解决：
 
-1. 高度关联的容器间通信container-to-container，通过`pods`解决，`pod`内容器使用`localhost`通信
-2. Pod间通信Pod-to-Pod，本文详细介绍
-3. Pod与Service通信Pod-to-Service，[services里阐述](http://kubernetes.io/docs/user-guide/services/)
-4. 外部与Service通信External-to-Service，[services里阐述](http://kubernetes.io/docs/user-guide/services/)
+1. 高度关联的**容器间**通信`container-to-container`，通过`pods`解决，`pod`内容器使用`localhost`通信
+2. **Pod**间通信`Pod-to-Pod`，本文详细介绍
+3. **Pod与Service**通信`Pod-to-Service`，[services里阐述](http://kubernetes.io/docs/user-guide/services/)
+4. **外部与Service**通信`External-to-Service`，[services里阐述](http://kubernetes.io/docs/user-guide/services/)
+
 
 
 

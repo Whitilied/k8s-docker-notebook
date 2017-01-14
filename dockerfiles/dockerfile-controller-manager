@@ -1,0 +1,6 @@
+# description:      kube-controller-manager, kubernetes-1.5.1
+# download link:    https://storage.googleapis.com/kubernetes-release/release/v1.5.1/kubernetes-server-linux-amd64.tar.gz
+
+FROM busybox:1.25
+
+ADD kube-controller-manager /usr/local/bin/

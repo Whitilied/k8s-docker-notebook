@@ -1,8 +1,8 @@
-# docker-zh_CN
-* docker文档翻译
-* kubernetes文档翻译
-* 个人总结内容
+# k8s-docker-notebook
+
+
+Personal notebook about kubernets and docker learnning
 
 
 
-翻译尽量简化便于阅读，自己在学习docker和kubernetes的历程
+个人k8s和docker学习笔记
