@@ -34,7 +34,7 @@
     "containers": [
       {
         "name": "etcd",
-        "image": "gcr.io/google_containers/etcd-amd64:3.0.14-kubeadm",
+        "image": "k8s/etcd:v3.0.15",
         "command": [
           "etcd",
           "--listen-client-urls=http://127.0.0.1:2379",

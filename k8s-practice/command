@@ -16,9 +16,24 @@ nginx_delete() {
 
 # -----------------------------kubectl----------------------------
 show_all() {
+    echo -e "Pods"
     kubectl get pods --all-namespaces
-    kubectl get services --all-namespaces
-    kubectl get deployment --all-namespaces
+    echo -e "\nServices"
+    kubectl get svc --all-namespaces
+    echo -e "\nDeployment"
+    kubectl get deploy --all-namespaces
+    echo -e "\nConfigMap"
+    kubectl get cm --all-namespaces
+    echo -e "\nDaemonSet"
+    kubectl get ds --all-namespaces
+    echo -e "\nRS"
+    kubectl get rs --all-namespaces
+    echo -e "\nRC"
+    kubectl get rc --all-namespaces
+}
+
+show_con() {
+    docker ps -a --format="table{{.ID}}\t{{.Image}}\t{{.Status}}\t{{.Command}}"
 }
 
 # -----------------------------clean----------------------------
@@ -26,9 +41,12 @@ clean() {
     docker rm -f $(docker ps -a --format={{.ID}})
     ip link set cni0 down
     ip link set flannel.1 down
-    #rm -rf /var/lib/cni/networks/cbr0/*
-    brctl delbr cni0
-    brctl delbr flannel.1
+    rm -rf /var/lib/cni
+    rm -rf /var/lib/kubelet
+    rm -rf /var/lib/etcd
+    
+    #brctl delbr cni0
+    #brctl delbr flannel.1
 }
 
 
@@ -46,6 +64,9 @@ case ${input} in
         ;;
     show_all)
         show_all
+        ;;
+    show_con)
+        show_con
         ;;
     clean)
         clean
