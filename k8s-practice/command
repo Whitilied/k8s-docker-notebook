@@ -1,0 +1,56 @@
+#!/bin/bash
+
+# -----------------------------nginx----------------------------
+nginx_start() {
+    kubectl run my-nginx --image=nginx --replicas=2 --port=80
+    kubectl expose deployment my-nginx --port=80 --type=NodePort
+}
+
+nginx_show() {
+    kubectl describe services my-nginx
+}
+
+nginx_delete() {
+    kubectl delete services,deployment my-nginx
+}
+
+# -----------------------------kubectl----------------------------
+show_all() {
+    kubectl get pods --all-namespaces
+    kubectl get services --all-namespaces
+    kubectl get deployment --all-namespaces
+}
+
+# -----------------------------clean----------------------------
+clean() {
+    docker rm -f $(docker ps -a --format={{.ID}})
+    ip link set cni0 down
+    ip link set flannel.1 down
+    #rm -rf /var/lib/cni/networks/cbr0/*
+    brctl delbr cni0
+    brctl delbr flannel.1
+}
+
+
+input="${1}"
+
+case ${input} in
+    nginx_start)
+        nginx_start
+        ;;
+    nginx_show)
+        nginx_show
+        ;;
+    nginx_delete)
+        nginx_delete
+        ;;
+    show_all)
+        show_all
+        ;;
+    clean)
+        clean
+        ;;
+    *)
+        echo "usage --"
+        ;;
+esac
