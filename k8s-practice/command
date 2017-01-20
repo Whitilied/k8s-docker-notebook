@@ -1,17 +1,17 @@
 #!/bin/bash
 
 # -----------------------------nginx----------------------------
-nginx_start() {
-    kubectl run my-nginx --image=nginx --replicas=2 --port=80
-    kubectl expose deployment my-nginx --port=80 --type=NodePort
+run_demo() {
+    kubectl run k8s-demo --image=nginxdemos/hello --replicas=2 --port=80
+    kubectl expose deployment k8s-demo --port=80 --type=NodePort
 }
 
-nginx_show() {
-    kubectl describe services my-nginx
+show_demo() {
+    kubectl describe services k8s-demo
 }
 
-nginx_delete() {
-    kubectl delete services,deployment my-nginx
+rm_demo() {
+    kubectl delete services,deployment k8s-demo
 }
 
 # -----------------------------kubectl----------------------------
@@ -41,26 +41,25 @@ clean() {
     docker rm -f $(docker ps -a --format={{.ID}})
     ip link set cni0 down
     ip link set flannel.1 down
+    
+    cat /proc/mounts | awk '{print $2}' | grep '/var/lib/kubelet' | xargs umount
     rm -rf /var/lib/cni
     rm -rf /var/lib/kubelet
     rm -rf /var/lib/etcd
-    
-    #brctl delbr cni0
-    #brctl delbr flannel.1
 }
 
 
 input="${1}"
 
 case ${input} in
-    nginx_start)
-        nginx_start
+    run_demo)
+        run_demo
         ;;
-    nginx_show)
-        nginx_show
+    show_demo)
+        show_demo
         ;;
-    nginx_delete)
-        nginx_delete
+    rm_demo)
+        rm_demo
         ;;
     show_all)
         show_all
