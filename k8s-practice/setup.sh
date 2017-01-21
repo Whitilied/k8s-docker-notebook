@@ -8,14 +8,14 @@ OS_RELEASE=$(cat /etc/*elease | grep ^ID=)
 OS_VERSION=$(cat /etc/*elease | grep VERSION_ID)
 
 if [[ ${OS_RELEASE##*=} =~ "ubuntu" ]]; then
-  if [[ ${VERSION##*=} =~ "16" ]]; then
+  if [[ ${OS_VERSION##*=} =~ "16" ]]; then
     echo "Starting install k8s for ubuntu xenial!"
   else
     echo "Doesn't support you OS version!"
     exit 1
   fi
-elif [[ ${RELEASE##*=} =~ "centos" ]]; then
-  if [[ ${VERSION##*=} =~ "7" ]]; then
+elif [[ ${OS_RELEASE##*=} =~ "centos" ]]; then
+  if [[ ${OS_VERSION##*=} =~ "7" ]]; then
     echo "Starting install k8s for centos 7"
   else
     echo "Doesn't support you OS version!"
@@ -51,20 +51,20 @@ IP.1 = 10.96.0.1
 IP.2 = ${1}
 EOF
   # ca
-  openssl genrsa -out ca-key.pem 2048
+  openssl genrsa -out ca-key.pem 2048 >/dev/null 2>&1
   openssl req -x509 -new -nodes -key ca-key.pem -days 10000\
-    -out ca.pem -subj "/CN=kube-ca"
+    -out ca.pem -subj "/CN=kube-ca" >/dev/null 2>&1
   # apiserver
-  openssl genrsa -out apiserver-key.pem 2048
+  openssl genrsa -out apiserver-key.pem 2048 >/dev/null 2>&1
   openssl req -new -key apiserver-key.pem\
-    -out apiserver.csr -subj "/CN=kube-apiserver" -config openssl.cnf
+    -out apiserver.csr -subj "/CN=kube-apiserver" -config openssl.cnf >/dev/null 2>&1
   openssl x509 -req -in apiserver.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial\
-    -out apiserver.pem -days 365 -extensions v3_req -extfile openssl.cnf
+    -out apiserver.pem -days 365 -extensions v3_req -extfile openssl.cnf >/dev/null 2>&1
   # admin
-  openssl genrsa -out admin-key.pem 2048
-  openssl req -new -key admin-key.pem -out admin.csr -subj "/CN=kube-admin"
+  openssl genrsa -out admin-key.pem 2048 >/dev/null 2>&1
+  openssl req -new -key admin-key.pem -out admin.csr -subj "/CN=kube-admin" >/dev/null 2>&1
   openssl x509 -req -in admin.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial\
-    -out admin.pem -days 365
+    -out admin.pem -days 365 >/dev/null 2>&1
     
   mv *.pem *.csr *.srl openssl.cnf ${HOST_CONF_DIR}/pki
 }
@@ -106,32 +106,49 @@ prepare_bin() {
   tar -zxf ${ROOT_DIR}/bin/kubelet-amd64-v1.5.1.tgz -C ${HOST_BIN_DIR}
     
   #TODO
-  case ${RELEASE} in
+  centos="\"centos\""
+  case ${OS_RELEASE##*=} in
     ubuntu)
       dpkg -i ${ROOT_DIR}/bin/16.04-xenial/ebtables_2.0.10.4.deb
       dpkg -i ${ROOT_DIR}/bin/16.04-xenial/socat_1.7.3.1.deb
       dpkg -i ${ROOT_DIR}/bin/16.04-xenial/kubernetes-cni_0.3.0.1.deb
       ;;
-    centos)
+    $centos)
       rpm -ivh ${ROOT_DIR}/bin/centos7/ebtables-2.0.10-15.el7.x86_64.rpm
       rpm -ivh ${ROOT_DIR}/bin/centos7/socat-1.7.2.2-5.el7.x86_64.rpm
       rpm -ivh ${ROOT_DIR}/bin/centos7/kubernetes-cni-0.3.0.1-0.07a8a2.x86_64.rpm
       ;;
+    *)
+      echo "Install cni failed!"
   esac
 }
 
 start_kubelet() {
   echo -e "\nStarting kubelet services."
-  screen -dmS kubeletsession ${HOST_BIN_DIR}/kubelet\
-    --kubeconfig=/etc/kubernetes/kubelet.conf\
-    --require-kubeconfig=true\
-    --pod-manifest-path=/etc/kubernetes/manifests\
-    --allow-privileged=true\
-    --network-plugin=cni\
-    --cni-conf-dir=/etc/cni/net.d\
-    --cni-bin-dir=/opt/cni/bin\
-    --cluster-dns=10.96.0.10\
-    --cluster-domain=cluster.local
+  if [[ ${OS_RELEASE##*=} =~ "ubuntu" ]]; then
+    screen -dmS kubeletsession ${HOST_BIN_DIR}/kubelet\
+      --kubeconfig=/etc/kubernetes/kubelet.conf\
+      --require-kubeconfig=true\
+      --pod-manifest-path=/etc/kubernetes/manifests\
+      --allow-privileged=true\
+      --network-plugin=cni\
+      --cni-conf-dir=/etc/cni/net.d\
+      --cni-bin-dir=/opt/cni/bin\
+      --cluster-dns=10.96.0.10\
+      --cluster-domain=cluster.local
+  fi
+  if [[ ${OS_RELEASE##*=} =~ "centos" ]]; then
+    nohup ${HOST_BIN_DIR}/kubelet\
+      --kubeconfig=/etc/kubernetes/kubelet.conf\
+      --require-kubeconfig=true\
+      --pod-manifest-path=/etc/kubernetes/manifests\
+      --allow-privileged=true\
+      --network-plugin=cni\
+      --cni-conf-dir=/etc/cni/net.d\
+      --cni-bin-dir=/opt/cni/bin\
+      --cluster-dns=10.96.0.10\
+      --cluster-domain=cluster.local > /var/log/kubelet.log 2>&1 &
+  fi
 }
 
 install_addons() {
@@ -140,6 +157,16 @@ install_addons() {
   ${HOST_BIN_DIR}/kubectl apply -f ${HOST_CONF_DIR}/addons/flannel.yaml
 }
 
+progress() {
+  b=''
+  for ((i=0;$i<=100;i+=2))
+  do
+    printf "progress:[%-50s]%d%%\r" $b $i
+    sleep ${1}
+    b=#$b  
+  done
+  echo 
+}
 
 if [ -z $1 ]; then
   echo "usage: ./setup.sh ip"
@@ -150,17 +177,6 @@ else
   prepare_bin
   prepare_components_images
   start_kubelet
-  sleep 30
+  progress 3
   install_addons
 fi
-
-process() {
-  b=''
-  for ((i=0;$i<=100;i+=2))
-  do
-    printf "progress:[%-50s]%d%%\r" $b $i
-    sleep 0.1
-    b=#$b  
-  done
-  echo 
-}
